@@ -1,8 +1,9 @@
-# -*-utf-8 -*-
+# -*-coding:utf-8 -*-
 from __future__ import unicode_literals
 
 from django.db import models
 from django.conf import settings
+import django.utils.timezone as timezone
 
 class Admin_bonus(models.Model):
     create_time = models.DateTimeField()
@@ -28,39 +29,43 @@ class Bonus_content(models.Model):
 
 class Consumer(models.Model):
     openId = models.CharField(max_length=30, primary_key=True)
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=30, null=True, blank=True)
     sex = models.BooleanField(default=True)
-    phoneNum = models.CharField(max_length=20)
-    idVIP = models.CharField(max_length=20)
-    isdining = models.BooleanField(default=False)
+    phoneNum = models.CharField(max_length=20, null=True, blank=True)
+    idVIP = models.CharField(max_length=20, null=True, blank=True)
+    isdining = models.BooleanField("正在就餐", default=False)
 
     def __unicode__(self):
+        if self.name:
             return self.name
+        else:
+            return self.openId
 
 class DiningTable(models.Model):
     indexTable = models.IntegerField(primary_key=True)
-    status = models.BooleanField()
-    seats = models.IntegerField()
-    isPrivate = models.BooleanField()
-    isSync = models.BooleanField()
+    status = models.BooleanField(default=False)
+    seats = models.IntegerField(default=4)
+    isPrivate = models.BooleanField(default=False)
+    isSync = models.BooleanField(default=False)
 
     def __unicode__(self):
             return "table %d"%(self.indexTable)
 
 class ConsumeInfo(models.Model):
-    totalPrice = models.IntegerField()
-    consumerCount = models.IntegerField()
-    startTime = models.DateTimeField()
-    finishTime = models.DateTimeField()
-    whoPay = models.CharField(max_length=30)
-    diningTable = models.OneToOneField(DiningTable, on_delete=models.CASCADE)
+    totalPrice = models.IntegerField(default=0.0)
+    consumerCount = models.IntegerField(default=0)
+    startTime = models.DateTimeField(auto_now=True)
+    finishTime = models.DateTimeField(null=True, blank=True)
+    whoPay = models.CharField(null=True, blank=True, max_length=30)
+    diningTable = models.ForeignKey(DiningTable, on_delete=models.CASCADE)
+    status = models.IntegerField(default=1) # 1-busy 0-finished
 
     def __unicode__(self):
             return "table %d's ConsumeInfo"%(self.diningTable.indexTable)
 
 class ConsumeRecord(models.Model):
     consumeInfo = models.ForeignKey(ConsumeInfo, on_delete=models.CASCADE)
-    consumer = models.OneToOneField(Consumer, on_delete=models.CASCADE)
+    consumer = models.ForeignKey(Consumer, on_delete=models.CASCADE)
 
 class Account(models.Model):
     sendBonusSum = models.IntegerField(default=0)
